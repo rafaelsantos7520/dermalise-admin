@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nome      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Cliente {
+  id          String   @id @default(cuid())
+  nome        String
+  idade       Int?
+  sexo        String   // obrigatório
+  email       String   @unique // obrigatório
+  telefone    String   // obrigatório
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  agendamentos Agendamento[]
+
+  @@map("clientes")
+}
+
+model Profissional {
+  id          String   @id @default(cuid())
+  nome        String
+  email       String   @unique
+  telefone    String
+  especialidade String?
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  agendamentos Agendamento[]
+
+  @@map("profissionais")
+}
+
+model Procedimento {
+  id          String   @id @default(cuid())
+  nome        String
+  descricao   String?
+  duracao     Int      // em minutos
+  preco       Decimal  @db.Decimal(10, 2)
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  agendamentos Agendamento[]
+
+  @@map("procedimentos")
+}
+
+model Agendamento {
+  id             String   @id @default(cuid())
+  dataHora       DateTime
+  status         StatusAgendamento @default(AGENDADO)
+  observacoes    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relacionamentos
+  clienteId      String
+  cliente        Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  
+  profissionalId String
+  profissional   Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  
+  procedimentoId String
+  procedimento   Procedimento @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+
+  @@map("agendamentos")
+}
+
+enum StatusAgendamento {
+  AGENDADO
+  CONFIRMADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+  FALTOU
+}
