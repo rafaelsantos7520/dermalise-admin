@@ -3,7 +3,6 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 
-
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -39,13 +38,14 @@ export const authOptions: NextAuthOptions = {
         return {
           id: admin.id,
           email: admin.email,
-          name: admin.nome,
+          name: admin.name,
         }
       }
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 horas
   },
   pages: {
     signIn: '/admin/login'
@@ -58,10 +58,17 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.id as string
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // Permite redirecionamentos para URLs do mesmo domínio
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Permite redirecionamentos para o mesmo domínio
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
     }
   }
 }

@@ -3,95 +3,86 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Admin {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
-  nome      String
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("admins")
+  @@map("admin")
 }
 
-model Cliente {
-  id          String   @id @default(cuid())
-  nome        String
-  idade       Int?
-  sexo        String   // obrigatório
-  email       String   @unique // obrigatório
-  telefone    String   // obrigatório
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relacionamentos
-  agendamentos Agendamento[]
+model Client {
+  id           String        @id @default(cuid())
+  name         String
+  age          Int?
+  gender       String
+  email        String        @unique
+  phone        String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 
-  @@map("clientes")
+  @@map("client")
 }
 
-model Profissional {
-  id          String   @id @default(cuid())
-  nome        String
-  email       String   @unique
-  telefone    String
-  especialidade String?
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relacionamentos
-  agendamentos Agendamento[]
+model Professional {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  phone        String
+  specialty    String?
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 
-  @@map("profissionais")
+  @@map("professional")
 }
 
-model Procedimento {
-  id          String   @id @default(cuid())
-  nome        String
-  descricao   String?
-  duracao     Int      // em minutos
-  preco       Decimal  @db.Decimal(10, 2)
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relacionamentos
-  agendamentos Agendamento[]
+model Procedure {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  duration     Int
+  price        Decimal       @db.Decimal(10, 2)
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 
-  @@map("procedimentos")
+  @@map("procedure")
 }
 
-model Agendamento {
-  id             String   @id @default(cuid())
-  dataHora       DateTime
-  status         StatusAgendamento @default(AGENDADO)
-  observacoes    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  // Relacionamentos
-  clienteId      String
-  cliente        Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  
-  profissionalId String
-  profissional   Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
-  
-  procedimentoId String
-  procedimento   Procedimento @relation(fields: [procedimentoId], references: [id], onDelete: Cascade)
+model Appointment {
+  id             String            @id @default(cuid())
+  dateTime       DateTime
+  status         AppointmentStatus @default(SCHEDULED)
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  clientId       String
+  professionalId String
+  procedureId    String
+  client         Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  procedure      Procedure         @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  professional   Professional      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
-  @@map("agendamentos")
+  @@map("appointment")
 }
 
-enum StatusAgendamento {
-  AGENDADO
-  CONFIRMADO
-  EM_ANDAMENTO
-  CONCLUIDO
-  CANCELADO
-  FALTOU
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
 }
